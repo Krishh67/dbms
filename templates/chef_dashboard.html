@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chef Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .logo img {
+            max-height: 50px;
+        }
+        .logout {
+            padding: 8px 16px;
+            background-color: #f44336;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+        .orders {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .order-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .order-id {
+            font-weight: bold;
+            color: #333;
+        }
+        .order-time {
+            color: #666;
+        }
+        .order-items {
+            margin: 15px 0;
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 4px;
+        }
+        .order-status {
+            margin-top: 15px;
+            text-align: center;
+        }
+        .status-btn {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .start-cooking {
+            background-color: #4CAF50;
+        }
+        .mark-ready {
+            background-color: #2196F3;
+        }
+        .flash {
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+        .flash.success {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #c8e6c9;
+        }
+        .flash.error {
+            background-color: #ffebee;
+            color: #c62828;
+            border: 1px solid #ffcdd2;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status-pending {
+            background-color: #fff3e0;
+            color: #e65100;
+        }
+        .status-cooking {
+            background-color: #e3f2fd;
+            color: #1565c0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">
+                <img src="/static/images/logo.png" alt="Restaurant Logo">
+            </div>
+            <a href="{{ url_for('chef_logout') }}" class="logout">Logout</a>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash {{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="orders">
+            {% for order in orders %}
+            <div class="order-card">
+                <div class="order-header">
+                    <span class="order-id">Order #{{ order.order_id }}</span>
+                    <span class="order-time">{{ order.order_date.strftime('%I:%M %p') }}</span>
+                </div>
+                
+                <div class="status-badge status-{{ order.order_status }}">
+                    {{ order.order_status.upper() }}
+                </div>
+
+                <div class="order-items">
+                    {% for item in order.items.split(',') %}
+                        <div>{{ item }}</div>
+                    {% endfor %}
+                </div>
+
+                <div class="order-status">
+                    <form action="{{ url_for('update_order') }}" method="POST">
+                        <input type="hidden" name="order_id" value="{{ order.order_id }}">
+                        {% if order.order_status == 'pending' %}
+                            <input type="hidden" name="status" value="cooking">
+                            <button type="submit" class="status-btn start-cooking">Start Cooking</button>
+                        {% elif order.order_status == 'cooking' %}
+                            <input type="hidden" name="status" value="ready">
+                            <button type="submit" class="status-btn mark-ready">Mark as Ready</button>
+                        {% endif %}
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html> 

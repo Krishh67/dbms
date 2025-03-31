@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meals Menu</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        .logo {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .logo img {
+            max-width: 150px;
+            height: auto;
+        }
+        h1 {
+            text-align: center;
+            color: #ff6b6b;
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #ff6b6b;
+            text-decoration: none;
+        }
+        .items {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .item {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .item img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+        }
+        .item-content {
+            padding: 15px;
+        }
+        .item h2 {
+            margin-top: 0;
+            color: #ff6b6b;
+        }
+        .item p {
+            color: #666;
+        }
+        .item .price {
+            font-weight: bold;
+            color: #ff6b6b;
+            font-size: 18px;
+            margin: 10px 0;
+        }
+        .item form {
+            display: flex;
+            align-items: center;
+        }
+        .item input[type="number"] {
+            width: 60px;
+            padding: 8px;
+            margin-right: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .item button {
+            flex-grow: 1;
+            padding: 8px;
+            background-color: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .item button:hover {
+            background-color: #ff5252;
+        }
+        .user-info {
+            text-align: right;
+            margin-bottom: 20px;
+        }
+        .cart-link {
+            display: inline-block;
+            background-color: #3498db;
+            color: white;
+            padding: 8px 15px;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-left: 10px;
+        }
+        .cart-link:hover {
+            background-color: #2980b9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <img src="/static/images/logo.png" alt="Food Ordering Logo">
+        </div>
+        
+        <div class="user-info">
+            Welcome, <span id="username">User</span>
+            <button windows.location.href="/cart" class="cart-link">View Cart (<span id="cart-count">0</span>)</button>
+        </div>
+        
+        <a href="/home.html" class="back-link">← Back to Categories</a>
+        
+        <h1>Meals Menu</h1>
+        
+        <div class="items">
+            <div class="item">
+                <img src="/static/images/grilled_chicken.jpg" alt="Grilled Chicken">
+                <div class="item-content">
+                    <h2>Grilled Chicken</h2>
+                    <p>Tender grilled chicken with herbs and spices</p>
+                    <div class="price">$12.99</div>
+                    <form action="/add_to_cart" method="post">
+                        <input type="hidden" name="item_id" value="meal1">
+                        <input type="hidden" name="item_name" value="Grilled Chicken">
+                        <input type="hidden" name="item_price" value="12.99">
+                        <input type="number" name="quantity" value="1" min="1" max="10">
+                        <button type="submit">Add to Cart</button>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="item">
+                <img src="/static/images/beef_steak.jpg" alt="Beef Steak">
+                <div class="item-content">
+                    <h2>Beef Steak</h2>
+                    <p>Premium cut beef steak with vegetables</p>
+                    <div class="price">$18.99</div>
+                    <form action="/add_to_cart" method="post">
+                        <input type="hidden" name="item_id" value="meal2">
+                        <input type="hidden" name="item_name" value="Beef Steak">
+                        <input type="hidden" name="item_price" value="18.99">
+                        <input type="number" name="quantity" value="1" min="1" max="10">
+                        <button type="submit">Add to Cart</button>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="item">
+                <img src="/static/images/vegetable_curry.jpg" alt="Vegetable Curry">
+                <div class="item-content">
+                    <h2>Vegetable Curry</h2>
+                    <p>Mixed vegetables in a rich curry sauce</p>
+                    <div class="price">$10.99</div>
+                    <form action="/add_to_cart" method="post">
+                        <input type="hidden" name="item_id" value="meal3">
+                        <input type="hidden" name="item_name" value="Vegetable Curry">
+                        <input type="hidden" name="item_price" value="10.99">
+                        <input type="number" name="quantity" value="1" min="1" max="10">
+                        <button type="submit">Add to Cart</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

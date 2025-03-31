@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+        }
+        .logo {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .logo img {
+            max-width: 200px;
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #666;
+            text-decoration: none;
+        }
+        .back-link:hover {
+            color: #333;
+        }
+        .order-summary, .payment-details {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h2 {
+            color: #333;
+            margin-top: 0;
+        }
+        .items-list {
+            margin: 20px 0;
+        }
+        .item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+        }
+        .total {
+            font-weight: bold;
+            font-size: 1.2em;
+            border-top: 2px solid #eee;
+            margin-top: 10px;
+            padding-top: 10px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #666;
+        }
+        input[type="text"],
+        input[type="tel"],
+        select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .payment-method {
+            margin: 20px 0;
+        }
+        .payment-option {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .payment-option:hover {
+            background: #f9f9f9;
+        }
+        .payment-option input[type="radio"] {
+            margin-right: 10px;
+        }
+        .upi-details {
+            display: none;
+            margin-top: 10px;
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 4px;
+        }
+        .submit-btn {
+            width: 100%;
+            padding: 12px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .submit-btn:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="logo">
+        <img src="/static/images/logo.png" alt="Food Ordering Logo">
+    </div>
+    
+    <div class="container">
+        <div class="order-summary">
+            <a href="/cart" class="back-link">← Back to Cart</a>
+            <h2>Order Summary</h2>
+            
+            <div class="items-list">
+                {% for item in items %}
+                <div class="item">
+                    <span>{{ item.quantity }}x {{ item.item_name }}</span>
+                    <span>₹{{ "%.2f"|format(item.price * item.quantity) }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <div class="summary-row">
+                <span>Subtotal</span>
+                <span>₹{{ "%.2f"|format(subtotal) }}</span>
+            </div>
+            <div class="summary-row">
+                <span>Tax (8%)</span>
+                <span>₹{{ "%.2f"|format(tax) }}</span>
+            </div>
+            <div class="summary-row total">
+                <span>Total</span>
+                <span>₹{{ "%.2f"|format(total) }}</span>
+            </div>
+        </div>
+        
+        <div class="payment-details">
+            <h2>Payment Details</h2>
+            <form action="/process_payment" method="POST">
+                <div class="form-group">
+                    <label for="table_number">Table Number</label>
+                    <select id="table_number" name="table_number" required>
+                        <option value="">Select Table Number</option>
+                        <option value="T1">Table 1</option>
+                        <option value="T2">Table 2</option>
+                        <option value="T3">Table 3</option>
+                        <option value="T4">Table 4</option>
+                        <option value="T5">Table 5</option>
+                        <option value="T6">Table 6</option>
+                        <option value="T7">Table 7</option>
+                        <option value="T8">Table 8</option>
+                        <option value="T9">Table 9</option>
+                        <option value="T10">Table 10</option>
+                        <option value="TAKEAWAY">Takeaway</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="contact">Contact Number</label>
+                    <input type="tel" id="contact" name="contact" required>
+                </div>
+                
+                <div class="payment-method">
+                    <label>Payment Method</label>
+                    
+                    <div class="payment-option">
+                        <input type="radio" id="cash" name="payment_method" value="cash" checked>
+                        <label for="cash">Cash on Delivery</label>
+                    </div>
+                    
+                    <div class="payment-option">
+                        <input type="radio" id="upi" name="payment_method" value="upi">
+                        <label for="upi">UPI Payment</label>
+                    </div>
+                    
+                    <div class="upi-details" id="upiDetails">
+                        <p>UPI ID: canteen@upi</p>
+                        <p>Please complete the UPI payment before clicking "Place Order"</p>
+                        <div class="form-group">
+                            <label for="upi_reference">UPI Reference Number</label>
+                            <input type="text" id="upi_reference" name="upi_reference">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="special_instructions">Special Instructions (Optional)</label>
+                    <input type="text" id="special_instructions" name="special_instructions">
+                </div>
+                
+                <button type="submit" class="submit-btn">Place Order</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Show/hide UPI details based on payment method selection
+        document.querySelectorAll('input[name="payment_method"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                const upiDetails = document.getElementById('upiDetails');
+                const upiReference = document.getElementById('upi_reference');
+                
+                if (this.value === 'upi') {
+                    upiDetails.style.display = 'block';
+                    upiReference.required = true;
+                } else {
+                    upiDetails.style.display = 'none';
+                    upiReference.required = false;
+                }
+            });
+        });
+    </script>
+</body>
+</html>

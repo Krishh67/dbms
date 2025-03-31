@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Processing Payment</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 500px;
+            padding: 30px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .logo {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .logo img {
+            max-width: 150px;
+            height: auto;
+        }
+        h1 {
+            color: #4CAF50;
+            margin-bottom: 20px;
+        }
+        .loader {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #4CAF50;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 2s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .progress {
+            margin: 20px 0;
+            height: 20px;
+            background-color: #f3f3f3;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .progress-bar {
+            height: 100%;
+            background-color: #4CAF50;
+            width: 0%;
+            transition: width 5s linear;
+        }
+        .message {
+            margin: 20px 0;
+            font-size: 18px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <img src="/static/images/logo.png" alt="Food Ordering Logo">
+        </div>
+        <h1>Processing Your Payment</h1>
+        <div class="loader"></div>
+        <div class="progress">
+            <div class="progress-bar" id="progress-bar"></div>
+        </div>
+        <div class="message" id="message">Initializing payment process...</div>
+    </div>
+
+    <script>
+        // Simulate a 5-second payment process
+        const messages = [
+            "Initializing payment process...",
+            "Verifying payment details...",
+            "Processing transaction...",
+            "Finalizing payment...",
+            "Payment successful! Creating your order..."
+        ];
+        
+        const progressBar = document.getElementById('progress-bar');
+        const messageElement = document.getElementById('message');
+        let currentStep = 0;
+        
+        // Start the progress bar animation
+        progressBar.style.width = '100%';
+        
+        // Update messages at intervals
+        const interval = setInterval(() => {
+            currentStep++;
+            if (currentStep < messages.length) {
+                messageElement.textContent = messages[currentStep];
+            } else {
+                clearInterval(interval);
+                // Redirect to complete payment after animation
+                window.location.href = '/complete_payment';
+            }
+        }, 1000);
+    </script>
+</body>
+</html>

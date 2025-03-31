@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menu Items</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        .logo {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .logo img {
+            max-width: 150px;
+            height: auto;
+        }
+        h1 {
+            text-align: center;
+            color: #ff6b6b;
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #ff6b6b;
+            text-decoration: none;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 0;
+        }
+        .search-container {
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+        .search-container input {
+            width: 70%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        .voice-search-btn {
+            background-color: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+        .voice-search-btn:hover {
+            background-color: #ff5252;
+            transform: scale(1.05);
+        }
+        .voice-search-btn i {
+            font-size: 24px;
+        }
+        .items {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .item {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        .item img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+        .item-content {
+            padding: 15px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .item h2 {
+            margin-top: 0;
+            color: #ff6b6b;
+        }
+        .item p {
+            color: #666;
+            margin-bottom: 10px;
+        }
+        .item .details {
+            margin-bottom: 10px;
+            flex-grow: 1;
+        }
+        .item .detail {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        .item .price {
+            font-weight: bold;
+            color: #ff6b6b;
+            font-size: 18px;
+            margin: 10px 0;
+        }
+        .item form {
+            display: flex;
+            align-items: center;
+            margin-top: auto;
+        }
+        .item input[type="number"] {
+            width: 60px;
+            padding: 8px;
+            margin-right: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .item button {
+            flex-grow: 1;
+            padding: 8px;
+            background-color: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .item button:hover {
+            background-color: #ff5252;
+        }
+        .user-info {
+            text-align: right;
+            margin-bottom: 20px;
+        }
+        .cart-link {
+            display: inline-block;
+            background-color: #3498db;
+            color: white;
+            padding: 8px 15px;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-left: 10px;
+            cursor: pointer;
+        }
+        .cart-link:hover {
+            background-color: #2980b9;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 18px;
+            color: #666;
+        }
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            font-size: 18px;
+            color: #666;
+            display: none;
+        }
+        
+        /* Voice search panel styles */
+        .voice-panel {
+            position: fixed;
+            top: 0;
+            right: -400px;
+            width: 350px;
+            height: 100%;
+            background-color: white;
+            box-shadow: -5px 0 15px rgba(0,0,0,0.1);
+            transition: right 0.3s ease;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+        .voice-panel.active {
+            right: 0;
+        }
+        .voice-panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .voice-panel-title {
+            font-size: 20px;
+            color: #ff6b6b;
+        }
+        .close-panel {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+        }
+        .voice-content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .mic-animation {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background-color: #ff6b6b;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 30px;
+            position: relative;
+        }
+        .mic-animation.listening::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background-color: rgba(255, 107, 107, 0.3);
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(1.5);
+                opacity: 0;
+            }
+        }
+        .mic-icon {
+            font-size: 40px;
+            color: white;
+        }
+        .voice-status {
+            font-size: 18px;
+            color: #666;
+            text-align: center;
+            margin-bottom: 20px;
+            min-height: 50px;
+        }
+        .voice-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .voice-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .voice-btn.confirm {
+            background-color: #2ecc71;
+            color: white;
+        }
+        .voice-btn.cancel {
+            background-color: #e74c3c;
+            color: white;
+        }
+        .voice-btn.start {
+            background-color: #ff6b6b;
+            color: white;
+            width: 100%;
+        }
+        .voice-results {
+            margin-top: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+            width: 100%;
+        }
+        .result-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+        }
+        .result-item:hover {
+            background-color: #f9f9f9;
+        }
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 999;
+            display: none;
+        }
+        .overlay.active {
+            display: block;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <img src="/static/images/logo.png" alt="Food Ordering Logo">
+        </div>
+        
+        <div class="user-info">
+            Welcome, <span id="username">User</span>
+            <a class="cart-link" onclick="window.location.href='/cart'">View Cart (<span id="cart-count">0</span>)</a>
+        </div>
+        
+        <button onclick="window.location.href='/home'" class="back-link">← Back to Categories</button>
+        
+        <h1>Menu Items</h1>
+        
+        <div class="search-container">
+            <input type="text" id="search-input" placeholder="Search for dishes, ingredients, or diet...">
+            <button class="voice-search-btn" id="voice-search-btn">
+                <i class="fas fa-microphone"></i>
+            </button>
+        </div>
+        
+        <div id="loading" class="loading">Loading menu items...</div>
+        <div id="no-results" class="no-results">No menu items found matching your search.</div>
+        
+        <div id="menu-items" class="items">
+            <!-- Menu items will be dynamically loaded here -->
+        </div>
+    </div>
+    
+    <!-- Voice search panel -->
+    <div class="voice-panel" id="voice-panel">
+        <div class="voice-panel-header">
+            <div class="voice-panel-title">Voice Search</div>
+            <button class="close-panel" id="close-panel">&times;</button>
+        </div>
+        <div class="voice-content">
+            <div class="mic-animation" id="mic-animation">
+                <i class="fas fa-microphone mic-icon"></i>
+            </div>
+            <div class="voice-status" id="voice-status">Tap the microphone to start speaking</div>
+            <button class="voice-btn start" id="start-voice">Start Listening</button>
+            <div class="voice-actions" id="voice-actions" style="display: none;">
+                <button class="voice-btn confirm" id="confirm-voice">Yes, Add to Cart</button>
+                <button class="voice-btn cancel" id="cancel-voice">No, Cancel</button>
+            </div>
+            <div class="voice-results" id="voice-results"></div>
+        </div>
+    </div>
+    
+    <div class="overlay" id="overlay"></div>
+
+    <script>
+        // Function to fetch menu data from MySQL database
+        async function fetchMenuData() {
+            try {
+                const response = await fetch('/menu');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch menu data');
+                }
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.error('Error fetching menu data:', error);
+                return [];
+            }
+        }
+
+        // Function to render menu items
+        function renderMenuItems(items) {
+            const menuContainer = document.getElementById('menu-items');
+            menuContainer.innerHTML = '';
+            
+            items.forEach((item, index) => {
+                // Generate a random price between 150 and 450 rupees if not provided
+                const price = item.price || Math.floor(Math.random() * 300 + 150);
+                
+                const itemElement = document.createElement('div');
+                itemElement.className = 'item';
+                itemElement.dataset.name = item.name;
+                itemElement.dataset.price = price;
+                itemElement.dataset.id = `menu${index}`;
+                
+                // Use the image URL from the database or a placeholder if not available
+                const imgUrl = item.img_url && item.img_url.trim() !== '' 
+                    ? item.img_url 
+                    : '/static/images/placeholder.jpg';
+                
+                itemElement.innerHTML = `
+                    <img src="${imgUrl}" alt="${item.name}" onerror="this.src='/static/images/placeholder.jpg'">
+                    <div class="item-content">
+                        <h2>${item.name}</h2>
+                        <div class="details">
+                            <p>${item.ingredients}</p>
+                            <div class="detail"><strong>Diet:</strong> ${item.diet}</div>
+                            <div class="detail"><strong>Prep Time:</strong> ${item.prep_time} mins</div>
+                            <div class="detail"><strong>Cook Time:</strong> ${item.cook_time} mins</div>
+                            <div class="detail"><strong>Flavor:</strong> ${item.flavor_profile}</div>
+                            <div class="detail"><strong>Region:</strong> ${item.region}, ${item.state}</div>
+                        </div>
+                        <div class="price">₹${price}</div>
+                        <form action="/add_to_cart" method="post">
+                            <input type="hidden" name="item_id" value="menu${index}">
+                            <input type="hidden" name="item_name" value="${item.name}">
+                            <input type="hidden" name="item_price" value="${price}">
+                            <input type="number" name="quantity" value="1" min="1" max="10">
+                            <button type="submit">Add to Cart</button>
+                        </form>
+                    </div>
+                `;
+                
+                menuContainer.appendChild(itemElement);
+            });
+            
+            document.getElementById('loading').style.display = 'none';
+            
+            if (items.length === 0) {
+                document.getElementById('no-results').style.display = 'block';
+            } else {
+                document.getElementById('no-results').style.display = 'none';
+            }
+        }
+
+        // Function to filter menu items based on search
+        function filterMenuItems(items, searchTerm) {
+            if (!searchTerm) return items;
+            
+            searchTerm = searchTerm.toLowerCase();
+            
+            return items.filter(item => {
+                return (
+                    item.name.toLowerCase().includes(searchTerm) ||
+                    item.ingredients.toLowerCase().includes(searchTerm) ||
+                    item.diet.toLowerCase().includes(searchTerm) ||
+                    item.flavor_profile.toLowerCase().includes(searchTerm) ||
+                    item.state.toLowerCase().includes(searchTerm) ||
+                    item.region.toLowerCase().includes(searchTerm)
+                );
+            });
+        }
+        
+        // Voice search functionality
+        let recognition;
+        let currentVoiceResults = [];
+        let selectedItem = null;
+        
+        // Initialize speech recognition
+        function initSpeechRecognition() {
+            window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            
+            if (window.SpeechRecognition) {
+                recognition = new SpeechRecognition();
+                recognition.continuous = false;
+                recognition.lang = 'en-US';
+                
+                recognition.onstart = function() {
+                    document.getElementById('mic-animation').classList.add('listening');
+                    document.getElementById('voice-status').textContent = 'Listening...';
+                    document.getElementById('start-voice').style.display = 'none';
+                };
+                
+                recognition.onresult = function(event) {
+                    const transcript = event.results[0][0].transcript.toLowerCase();
+                    document.getElementById('voice-status').textContent = `You said: "${transcript}"`;
+                    
+                    // Search for matching menu items
+                    searchVoiceResults(transcript);
+                };
+                
+                recognition.onerror = function(event) {
+                    document.getElementById('mic-animation').classList.remove('listening');
+                    document.getElementById('voice-status').textContent = 'Error occurred in recognition: ' + event.error;
+                    document.getElementById('start-voice').style.display = 'block';
+                };
+                
+                recognition.onend = function() {
+                    document.getElementById('mic-animation').classList.remove('listening');
+                    document.getElementById('start-voice').style.display = 'block';
+                };
+            } else {
+                document.getElementById('voice-status').textContent = 'Speech recognition not supported in this browser.';
+            }
+        }
+        
+        // Search for menu items based on voice input
+        function searchVoiceResults(transcript) {
+            currentVoiceResults = allMenuItems.filter(item => 
+                item.name.toLowerCase().includes(transcript) ||
+                item.ingredients.toLowerCase().includes(transcript)
+            );
+            
+            const resultsContainer = document.getElementById('voice-results');
+            resultsContainer.innerHTML = '';
+            
+            if (currentVoiceResults.length > 0) {
+                // Find the best match (first result)
+                selectedItem = currentVoiceResults[0];
+                
+                // Ask for confirmation using speech synthesis
+                speak(`Do you mean ${selectedItem.name}?`);
+                
+                // Show confirmation buttons
+                document.getElementById('voice-actions').style.display = 'flex';
+                
+                // Display all results
+                currentVoiceResults.forEach((item, index) => {
+                    const resultItem = document.createElement('div');
+                    resultItem.className = 'result-item';
+                    resultItem.textContent = item.name;
+                    resultItem.addEventListener('click', () => {
+                        selectedItem = item;
+                        speak(`Do you mean ${selectedItem.name}?`);
+                    });
+                    
+                    resultsContainer.appendChild(resultItem);
+                });
+            } else {
+                resultsContainer.innerHTML = '<div class="no-results">No matching items found.</div>';
+                speak("I couldn't find any matching items. Please try again.");
+                document.getElementById('voice-actions').style.display = 'none';
+            }
+        }
+        
+        // Text-to-speech function
+        function speak(text) {
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'en-US';
+                utterance.rate = 1;
+                utterance.pitch = 1;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+        
+        // Add item to cart
+        function addToCartVoice(item) {
+            // Find the menu item element
+            const menuItems = document.querySelectorAll('.item');
+            let itemElement = null;
+            
+            for (const element of menuItems) {
+                if (element.dataset.name === item.name) {
+                    itemElement = element;
+                    break;
+                }
+            }
+            
+            if (itemElement) {
+                // Get the form and submit it
+                const form = itemElement.querySelector('form');
+                form.submit();
+                
+                // Provide voice feedback
+                speak("Order added to cart");
+                
+                // Close the voice panel
+                closeVoicePanel();
+            }
+        }
+        
+        // Open voice panel
+        function openVoicePanel() {
+            document.getElementById('voice-panel').classList.add('active');
+            document.getElementById('overlay').classList.add('active');
+        }
+        
+        // Close voice panel
+        function closeVoicePanel() {
+            document.getElementById('voice-panel').classList.remove('active');
+            document.getElementById('overlay').classList.remove('active');
+            document.getElementById('voice-actions').style.display = 'none';
+            document.getElementById('voice-results').innerHTML = '';
+            document.getElementById('voice-status').textContent = 'Tap the microphone to start speaking';
+            
+            // Stop speech recognition if active
+            if (recognition) {
+                recognition.abort();
+            }
+        }
+        
+        // Initialize the page
+        let allMenuItems = [];
+        
+        async function initPage() {
+            allMenuItems = await fetchMenuData();
+            renderMenuItems(allMenuItems);
+            
+            // Set up search functionality
+            const searchInput = document.getElementById('search-input');
+            searchInput.addEventListener('input', () => {
+                const searchTerm = searchInput.value;
+                const filteredItems = filterMenuItems(allMenuItems, searchTerm);
+                renderMenuItems(filteredItems);
+            });
+            
+            // Initialize speech recognition
+            initSpeechRecognition();
+            
+            // Set up voice search button
+            document.getElementById('voice-search-btn').addEventListener('click', openVoicePanel);
+            
+            // Set up close panel button
+            document.getElementById('close-panel').addEventListener('click', closeVoicePanel);
+            document.getElementById('overlay').addEventListener('click', closeVoicePanel);
+            
+            // Set up start voice button
+            document.getElementById('start-voice').addEventListener('click', () => {
+                if (recognition) {
+                    recognition.start();
+                }
+            });
+            
+            // Set up confirmation buttons
+            document.getElementById('confirm-voice').addEventListener('click', () => {
+                if (selectedItem) {
+                    addToCartVoice(selectedItem);
+                }
+            });
+            
+            document.getElementById('cancel-voice').addEventListener('click', () => {
+                document.getElementById('voice-actions').style.display = 'none';
+                document.getElementById('voice-status').textContent = 'Tap the microphone to try again';
+                speak("Okay, let's try again.");
+            });
+        }
+
+        // Start loading data when the page loads
+        window.addEventListener('load', initPage);
+    </script>
+</body>
+</html>

@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shopping Cart</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        .logo {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .logo img {
+            max-width: 150px;
+            height: auto;
+        }
+        h1 {
+            text-align: center;
+            color: #ff6b6b;
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #ff6b6b;
+            text-decoration: none;
+        }
+        .cart-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        .cart-table th {
+            background-color: #ff6b6b;
+            color: white;
+            padding: 10px;
+            text-align: left;
+        }
+        .cart-table td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        .cart-table tr:last-child td {
+            border-bottom: none;
+        }
+        .cart-table .item-name {
+            width: 40%;
+        }
+        .cart-table .item-price, .cart-table .item-quantity, .cart-table .item-total {
+            width: 20%;
+        }
+        .cart-table .remove-btn {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .cart-table .remove-btn:hover {
+            background-color: #c0392b;
+        }
+        .cart-summary {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .cart-summary .row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .cart-summary .total {
+            font-size: 20px;
+            font-weight: bold;
+            color: #ff6b6b;
+        }
+        .checkout-btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+        }
+        .checkout-btn:hover {
+            background-color: #27ae60;
+        }
+        .empty-cart {
+            text-align: center;
+            padding: 40px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .empty-cart p {
+            margin-bottom: 20px;
+            color: #666;
+        }
+        .empty-cart a {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #ff6b6b;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+        .empty-cart a:hover {
+            background-color: #ff5252;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <img src="/static/images/logo.png" alt="Food Ordering Logo">
+        </div>
+        
+        <a href="/home" class="back-link">← Continue Ordering</a>
+        
+        <h1>Your Shopping Cart</h1>
+
+        <!-- Debug Info -->
+        <div style="background: #eee; padding: 10px; margin: 10px 0;">
+            Debug Info:
+            <br>Items Length: {{ items|length }}
+            <br>Has Items?: {{ items is not none and items|length > 0 }}
+            <br>Items: {{ items }}
+        </div>
+        
+        <!-- Cart Items -->
+        <div id="cart-with-items">
+            <table class="cart-table">
+                <thead>
+                    <tr>
+                        <th class="item-name">Item</th>
+                        <th class="item-price">Price</th>
+                        <th class="item-quantity">Quantity</th>
+                        <th class="item-total">Total</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="cart-items">
+                    {% if items %}
+                        {% for item in items %}
+                        <tr>
+                            <td>{{ item.item_name }}</td>
+                            <td>₹{{ "%.2f"|format(item.price) }}</td>
+                            <td>{{ item.quantity }}</td>
+                            <td>₹{{ "%.2f"|format(item.price * item.quantity) }}</td>
+                            <td>
+                                <form action="/remove_from_cart" method="post">
+                                    <input type="hidden" name="item_id" value="{{ item.item_id }}">
+                                    <input type="hidden" name="category" value="{{ item.category1 }}">
+                                    <button type="submit" class="remove-btn">Remove</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="5" style="text-align: center;">No items in cart</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+            
+            {% if items and items|length > 0 %}
+            <!-- Cart Summary -->
+            <div class="cart-summary">
+                <div class="summary-row">
+                    <span>Subtotal:</span>
+                    <span>₹{{ "%.2f"|format(subtotal) }}</span>
+                </div>
+                <div class="summary-row">
+                    <span>Tax (8%):</span>
+                    <span>₹{{ "%.2f"|format(tax) }}</span>
+                </div>
+                <div class="summary-row total">
+                    <span>Total:</span>
+                    <span>₹{{ "%.2f"|format(total) }}</span>
+                </div>
+                <a href="/checkout" class="checkout-btn">Proceed to Checkout</a>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Empty Cart Message -->
+        {% if not items or items|length == 0 %}
+        <div id="empty-cart">
+            <p>Your cart is empty</p>
+            <a href="/home" class="continue-shopping">Continue Shopping</a>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>

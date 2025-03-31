@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Food Categories</title>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        .logo {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .logo img {
+            max-width: 150px;
+            height: auto;
+        }
+        h1 {
+            text-align: center;
+            color: #ff6b6b;
+        }
+        .categories {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+        .category {
+            width: 30%;
+            margin-bottom: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+            transition: transform 0.3s;
+        }
+        .category:hover {
+            transform: translateY(-5px);
+        }
+        .category img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+        }
+        .category-content {
+            padding: 15px;
+        }
+        .category h2 {
+            margin-top: 0;
+            color: #ff6b6b;
+        }
+        .category p {
+            color: #666;
+        }
+        .category a {
+            display: block;
+            text-align: center;
+            background-color: #ff6b6b;
+            color: white;
+            padding: 10px;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+        .category a:hover {
+            background-color: #ff5252;
+        }
+        .user-info {
+            text-align: right;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .cart-link {
+            display: inline-block;
+            background-color: #3498db;
+            color: white;
+            padding: 8px 15px;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-left: 10px;
+        }
+        .cart-link:hover {
+            background-color: #2980b9;
+        }
+
+        #animatedText {
+            font-size: 24px;
+            color: #333;
+            white-space: nowrap;
+            position: relative;
+            display: inline-block;
+            text-align: left;
+                opacity: 1;
+            margin-right: 15px;
+            }
+
+        .name-highlight {
+            font-family: 'Pacifico', cursive;
+            color: #ff6b6b;
+        }
+
+        @keyframes moveToTopRight {
+            0% {
+                font-size: 40px;
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            20% {
+                font-size: 36px;
+                opacity: 0.5;
+                transform: translateY(-10px);
+            }
+            40% {
+                font-size: 32px;
+                opacity: 0.8;
+                transform: translateY(-5px);
+            }
+            60% {
+                font-size: 28px;
+                opacity: 0.9;
+                transform: translateY(-2px);
+            }
+            80% {
+                font-size: 26px;
+                opacity: 1;
+                transform: translateY(-1px);
+            }
+            100% {
+                font-size: 24px;
+            opacity: 1;
+                transform: translateY(0);
+        }
+        }
+
+        .move {
+            animation: moveToTopRight 2s forwards;
+        }
+
+        .line2 {
+            opacity: 0;
+            display: block;
+            font-size: 16px;
+            margin-top: 5px;
+            transition: opacity 0.5s;
+        }
+
+        .show-second-line .line2 {
+            opacity: 1;
+        }
+
+        .content-container {
+            opacity: 0;
+            transition: opacity 1.5s;
+        }
+
+        .show-content {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <img src="/static/images/logo.png" alt="Food Ordering Logo">
+        </div>
+        
+        <div class="user-info">
+            <div id="animatedText"></div>
+            <a href="/cart" class="cart-link">View Cart (<span id="cart-count">0</span>)</a>
+        </div>
+
+        <div class="content-container">
+            <h1>Food Categories</h1>
+            <div class="categories">
+                <div class="category">
+                    <img src="/static/images/meals.jpg" alt="Meals">
+                <div class="category-content">
+                        <h2>Meals</h2>
+                        <p>Delicious main courses and full meals</p>
+                        <a href="/category/meals">View Meals</a>
+                </div>
+            </div>
+
+            <div class="category">
+                    <img src="/static/images/menu.jpg" alt="Menu">
+                <div class="category-content">
+                        <h2>Menu</h2>
+                        <p>Browse our complete food menu</p>
+                        <a href="/category/menu">View Menu</a>
+                </div>
+            </div>
+
+                <div class="category">
+                    <img src="/static/images/drinks.jpg" alt="Drinks">
+                    <div class="category-content">
+                        <h2>Drinks</h2>
+                        <p>Refreshing beverages and drinks</p>
+                        <a href="/category/drinks">View Drinks</a>
+        </div>
+    </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const userName = "{{name}}";
+        const firstLine = `Hello ${userName}, `;
+        const secondLine = "Order your favorite food now";
+
+        let index = 0;
+        const textElement = document.getElementById("animatedText");
+        const contentContainer = document.querySelector('.content-container');
+
+        function typeText() {
+            if (index < firstLine.length) {
+                const currentText = firstLine.substring(0, index + 1);
+                const displayText = currentText.replace(
+                    userName,
+                    `<span class="name-highlight">${userName}</span>`
+                );
+                textElement.innerHTML = displayText;
+                index++;
+                setTimeout(typeText, 100);
+            } else {
+                setTimeout(typeSecondLine, 500);
+            }
+        }
+
+        function typeSecondLine() {
+            index = 0;
+            const secondLineElement = document.createElement("span");
+            secondLineElement.classList.add("line2");
+            secondLineElement.innerHTML = "";
+            textElement.appendChild(secondLineElement);
+
+            function typeSecond() {
+                if (index < secondLine.length) {
+                    secondLineElement.innerHTML = secondLine.substring(0, index + 1);
+                    index++;
+                    setTimeout(typeSecond, 50);
+                } else {
+                    setTimeout(showContent, 800);
+                    textElement.classList.add('show-second-line');
+                }
+            }
+            typeSecond();
+        }
+
+        function showContent() {
+            contentContainer.classList.add('show-content');
+            textElement.classList.add("move");
+        }
+
+        setTimeout(function() {
+            textElement.classList.add("move");
+            typeText();
+        }, 300);
+    </script>
+</body>
+</html>

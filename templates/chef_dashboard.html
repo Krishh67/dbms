@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chef Dashboard</title>
+    <meta http-equiv="refresh" content="30"><!-- Auto refresh every 30 seconds -->
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -53,12 +54,17 @@
         }
         .order-time {
             color: #666;
+            font-size: 0.9em;
         }
         .order-items {
             margin: 15px 0;
             padding: 10px;
             background: #f9f9f9;
             border-radius: 4px;
+            line-height: 1.4;
+        }
+        .order-item {
+            margin: 5px 0;
         }
         .order-status {
             margin-top: 15px;
@@ -72,12 +78,25 @@
             color: white;
             cursor: pointer;
             font-weight: bold;
+            transition: background-color 0.3s;
         }
         .start-cooking {
             background-color: #4CAF50;
         }
+        .start-cooking:hover {
+            background-color: #45a049;
+        }
         .mark-ready {
             background-color: #2196F3;
+        }
+        .mark-ready:hover {
+            background-color: #1976D2;
+        }
+        .mark-completed {
+            background-color: #9C27B0;
+        }
+        .mark-completed:hover {
+            background-color: #7B1FA2;
         }
         .flash {
             padding: 10px;
@@ -100,6 +119,7 @@
             border-radius: 12px;
             font-size: 12px;
             font-weight: bold;
+            margin-top: 10px;
         }
         .status-pending {
             background-color: #fff3e0;
@@ -108,6 +128,43 @@
         .status-cooking {
             background-color: #e3f2fd;
             color: #1565c0;
+        }
+        .status-ready {
+            background-color: #E1F5FE;
+            color: #0277BD;
+        }
+        .status-completed {
+            background-color: #E8F5E9;
+            color: #2E7D32;
+        }
+        .dashboard-stats {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            flex: 1;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+        .stat-label {
+            color: #666;
+            margin-top: 5px;
+        }
+        .no-orders {
+            text-align: center;
+            padding: 40px;
+            background: white;
+            border-radius: 8px;
+            color: #666;
         }
     </style>
 </head>
@@ -128,38 +185,63 @@
             {% endif %}
         {% endwith %}
 
-        <div class="orders">
-            {% for order in orders %}
-            <div class="order-card">
-                <div class="order-header">
-                    <span class="order-id">Order #{{ order.order_id }}</span>
-                    <span class="order-time">{{ order.order_date.strftime('%I:%M %p') }}</span>
-                </div>
-                
-                <div class="status-badge status-{{ order.order_status }}">
-                    {{ order.order_status.upper() }}
-                </div>
-
-                <div class="order-items">
-                    {% for item in order.items.split(',') %}
-                        <div>{{ item }}</div>
-                    {% endfor %}
-                </div>
-
-                <div class="order-status">
-                    <form action="{{ url_for('update_order') }}" method="POST">
-                        <input type="hidden" name="order_id" value="{{ order.order_id }}">
-                        {% if order.order_status == 'pending' %}
-                            <input type="hidden" name="status" value="cooking">
-                            <button type="submit" class="status-btn start-cooking">Start Cooking</button>
-                        {% elif order.order_status == 'cooking' %}
-                            <input type="hidden" name="status" value="ready">
-                            <button type="submit" class="status-btn mark-ready">Mark as Ready</button>
-                        {% endif %}
-                    </form>
-                </div>
+        <div class="dashboard-stats">
+            <div class="stat-card">
+                <div class="stat-number">{{ orders|selectattr('status', 'equalto', 'pending')|list|length }}</div>
+                <div class="stat-label">Pending Orders</div>
             </div>
-            {% endfor %}
+            <div class="stat-card">
+                <div class="stat-number">{{ orders|selectattr('status', 'equalto', 'cooking')|list|length }}</div>
+                <div class="stat-label">Currently Cooking</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ orders|selectattr('status', 'equalto', 'ready')|list|length }}</div>
+                <div class="stat-label">Ready for Pickup</div>
+            </div>
+        </div>
+
+        <div class="orders">
+            {% if orders %}
+                {% for order in orders %}
+                <div class="order-card">
+                    <div class="order-header">
+                        <span class="order-id">Order #{{ order.order_id }}</span>
+                        <span class="order-time">{{ order.order_date.strftime('%I:%M %p') }}</span>
+                    </div>
+                    
+                    <div class="status-badge status-{{ order.status }}">
+                        {{ order.status.upper() }}
+                    </div>
+
+                    <div class="order-items">
+                        {% for item in order.order_items.split(', ') %}
+                            <div class="order-item">{{ item }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="order-status">
+                        <form action="{{ url_for('update_order') }}" method="POST">
+                            <input type="hidden" name="order_id" value="{{ order.order_id }}">
+                            {% if order.status == 'pending' %}
+                                <input type="hidden" name="status" value="cooking">
+                                <button type="submit" class="status-btn start-cooking">Start Cooking</button>
+                            {% elif order.status == 'cooking' %}
+                                <input type="hidden" name="status" value="ready">
+                                <button type="submit" class="status-btn mark-ready">Mark as Ready</button>
+                            {% elif order.status == 'ready' %}
+                                <input type="hidden" name="status" value="completed">
+                                <button type="submit" class="status-btn mark-completed">Mark as Completed</button>
+                            {% endif %}
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="no-orders">
+                    <h2>No pending orders at the moment</h2>
+                    <p>New orders will appear here automatically</p>
+                </div>
+            {% endif %}
         </div>
     </div>
 </body>

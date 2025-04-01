@@ -322,14 +322,24 @@
         </div>
         
         <div class="user-info">
-            Welcome, <span id="username">User</span>
-            <a class="cart-link" onclick="window.location.href='/cart'">View Cart (<span id="cart-count">0</span>)</a>
+            Welcome, {{ name }}
+            <a href="/cart" class="cart-link">View Cart</a>
         </div>
         
         <button onclick="window.location.href='/home'" class="back-link">← Back to Categories</button>
         
         <h1>Menu Items</h1>
         
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash-message flash-{{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
         <div class="search-container">
             <input type="text" id="search-input" placeholder="Search for dishes, ingredients, or diet...">
             <button class="voice-search-btn" id="voice-search-btn">
@@ -389,37 +399,54 @@
             menuContainer.innerHTML = '';
             
             items.forEach((item, index) => {
-                // Generate a random price between 150 and 450 rupees if not provided
+                // Normalize the item name to Title Case
+                const normalizedName = item.name.split(' ')
+                    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                    .join(' ');
+                
+                // Use price from database if available, otherwise generate random
                 const price = item.price || Math.floor(Math.random() * 300 + 150);
+                const item_id = item.item_id || `canteen${index}`; // Use DB item_id if available
                 
                 const itemElement = document.createElement('div');
                 itemElement.className = 'item';
-                itemElement.dataset.name = item.name;
+                itemElement.dataset.name = normalizedName;
                 itemElement.dataset.price = price;
-                itemElement.dataset.id = `menu${index}`;
+                itemElement.dataset.id = item_id;
                 
                 // Use the image URL from the database or a placeholder if not available
                 const imgUrl = item.img_url && item.img_url.trim() !== '' 
                     ? item.img_url 
                     : '/static/images/placeholder.jpg';
                 
+                // Normalize other text fields
+                const normalizedIngredients = item.ingredients
+                    .split(',')
+                    .map(ing => ing.trim().charAt(0).toUpperCase() + ing.trim().slice(1).toLowerCase())
+                    .join(', ');
+                
+                const normalizedDiet = item.diet.charAt(0).toUpperCase() + item.diet.slice(1).toLowerCase();
+                const normalizedFlavor = item.flavor_profile.charAt(0).toUpperCase() + item.flavor_profile.slice(1).toLowerCase();
+                const normalizedRegion = item.region.charAt(0).toUpperCase() + item.region.slice(1).toLowerCase();
+                const normalizedState = item.state.charAt(0).toUpperCase() + item.state.slice(1).toLowerCase();
+                
                 itemElement.innerHTML = `
-                    <img src="${imgUrl}" alt="${item.name}" onerror="this.src='/static/images/placeholder.jpg'">
+                    <img src="${imgUrl}" alt="${normalizedName}" onerror="this.src='/static/images/placeholder.jpg'">
                     <div class="item-content">
-                        <h2>${item.name}</h2>
+                        <h2>${normalizedName}</h2>
                         <div class="details">
-                            <p>${item.ingredients}</p>
-                            <div class="detail"><strong>Diet:</strong> ${item.diet}</div>
+                            <p>${normalizedIngredients}</p>
+                            <div class="detail"><strong>Diet:</strong> ${normalizedDiet}</div>
                             <div class="detail"><strong>Prep Time:</strong> ${item.prep_time} mins</div>
                             <div class="detail"><strong>Cook Time:</strong> ${item.cook_time} mins</div>
-                            <div class="detail"><strong>Flavor:</strong> ${item.flavor_profile}</div>
-                            <div class="detail"><strong>Region:</strong> ${item.region}, ${item.state}</div>
+                            <div class="detail"><strong>Flavor:</strong> ${normalizedFlavor}</div>
+                            <div class="detail"><strong>Region:</strong> ${normalizedRegion}, ${normalizedState}</div>
                         </div>
                         <div class="price">₹${price}</div>
                         <form action="/add_to_cart" method="post">
-                            <input type="hidden" name="item_id" value="menu${index}">
-                            <input type="hidden" name="item_name" value="${item.name}">
-                            <input type="hidden" name="item_price" value="${price}">
+                            <input type="hidden" name="item_id" value="${item_id}">
+                            <input type="hidden" name="item_name" value="${normalizedName}">
+                            <input type="hidden" name="category" value="canteen">
                             <input type="number" name="quantity" value="1" min="1" max="10">
                             <button type="submit">Add to Cart</button>
                         </form>
@@ -442,16 +469,38 @@
         function filterMenuItems(items, searchTerm) {
             if (!searchTerm) return items;
             
-            searchTerm = searchTerm.toLowerCase();
+            searchTerm = searchTerm.toLowerCase().trim();
+            console.log('Searching for:', searchTerm); // Debug log
             
             return items.filter(item => {
-                return (
-                    item.name.toLowerCase().includes(searchTerm) ||
-                    item.ingredients.toLowerCase().includes(searchTerm) ||
-                    item.diet.toLowerCase().includes(searchTerm) ||
-                    item.flavor_profile.toLowerCase().includes(searchTerm) ||
-                    item.state.toLowerCase().includes(searchTerm) ||
-                    item.region.toLowerCase().includes(searchTerm)
+                const normalizedName = (item.name || '').toLowerCase().trim();
+                const normalizedIngredients = (item.ingredients || '').toLowerCase().trim();
+                const normalizedDiet = (item.diet || '').toLowerCase().trim();
+                const normalizedFlavor = (item.flavor_profile || '').toLowerCase().trim();
+                const normalizedState = (item.state || '').toLowerCase().trim();
+                const normalizedRegion = (item.region || '').toLowerCase().trim();
+                
+                // Debug logs
+                console.log('Checking item:', {
+                    name: normalizedName,
+                    ingredients: normalizedIngredients,
+                    diet: normalizedDiet,
+                    flavor: normalizedFlavor,
+                    state: normalizedState,
+                    region: normalizedRegion
+                });
+                
+                // Split search term into words for better matching
+                const searchWords = searchTerm.split(' ');
+                
+                // Check if all search words are found in any of the item's properties
+                return searchWords.every(word => 
+                    normalizedName.includes(word) ||
+                    normalizedIngredients.includes(word) ||
+                    normalizedDiet.includes(word) ||
+                    normalizedFlavor.includes(word) ||
+                    normalizedState.includes(word) ||
+                    normalizedRegion.includes(word)
                 );
             });
         }
@@ -468,7 +517,7 @@
             if (window.SpeechRecognition) {
                 recognition = new SpeechRecognition();
                 recognition.continuous = false;
-                recognition.lang = 'en-US';
+                recognition.lang = 'en-IN';  // Changed to Indian English
                 
                 recognition.onstart = function() {
                     document.getElementById('mic-animation').classList.add('listening');
@@ -501,20 +550,31 @@
         
         // Search for menu items based on voice input
         function searchVoiceResults(transcript) {
-            currentVoiceResults = allMenuItems.filter(item => 
-                item.name.toLowerCase().includes(transcript) ||
-                item.ingredients.toLowerCase().includes(transcript)
-            );
+            // Clean up the transcript by removing punctuation and extra spaces
+            const searchTerm = transcript.toLowerCase()
+                .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "") // Remove punctuation
+                .trim();
+            
+            console.log('Voice search term (cleaned):', searchTerm);
+            
+            // Use the same filterMenuItems function that's used for text search
+            currentVoiceResults = filterMenuItems(allMenuItems, searchTerm);
+            console.log('Search results:', currentVoiceResults);
             
             const resultsContainer = document.getElementById('voice-results');
             resultsContainer.innerHTML = '';
             
-            if (currentVoiceResults.length > 0) {
+            if (currentVoiceResults && currentVoiceResults.length > 0) {
                 // Find the best match (first result)
                 selectedItem = currentVoiceResults[0];
                 
+                // Normalize the name for speech
+                const normalizedName = selectedItem.name.split(' ')
+                    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                    .join(' ');
+                
                 // Ask for confirmation using speech synthesis
-                speak(`Do you mean ${selectedItem.name}?`);
+                speak(`Do you mean ${normalizedName}?`);
                 
                 // Show confirmation buttons
                 document.getElementById('voice-actions').style.display = 'flex';
@@ -523,56 +583,106 @@
                 currentVoiceResults.forEach((item, index) => {
                     const resultItem = document.createElement('div');
                     resultItem.className = 'result-item';
-                    resultItem.textContent = item.name;
+                    const displayName = item.name.split(' ')
+                        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                        .join(' ');
+                    resultItem.textContent = displayName;
                     resultItem.addEventListener('click', () => {
                         selectedItem = item;
-                        speak(`Do you mean ${selectedItem.name}?`);
+                        speak(`Do you mean ${displayName}?`);
                     });
                     
                     resultsContainer.appendChild(resultItem);
                 });
+                
+                // Also update the main menu display to show matching items
+                renderMenuItems(currentVoiceResults);
             } else {
+                console.log('No results found for:', searchTerm);
                 resultsContainer.innerHTML = '<div class="no-results">No matching items found.</div>';
                 speak("I couldn't find any matching items. Please try again.");
                 document.getElementById('voice-actions').style.display = 'none';
+                
+                // Show all items if no matches found
+                renderMenuItems(allMenuItems);
             }
         }
         
-        // Text-to-speech function
+        // Text-to-speech function with Indian English voice
         function speak(text) {
             if ('speechSynthesis' in window) {
                 const utterance = new SpeechSynthesisUtterance(text);
-                utterance.lang = 'en-US';
-                utterance.rate = 1;
+                
+                // Get available voices
+                const voices = window.speechSynthesis.getVoices();
+                
+                // Try to find an Indian English voice
+                const indianVoice = voices.find(voice => 
+                    voice.lang.includes('en-IN') || 
+                    voice.name.toLowerCase().includes('indian') ||
+                    voice.name.toLowerCase().includes('hindi')
+                );
+                
+                if (indianVoice) {
+                    utterance.voice = indianVoice;
+                }
+                
+                utterance.lang = 'en-IN';  // Set to Indian English
+                utterance.rate = 0.9;  // Slightly slower rate for better clarity
                 utterance.pitch = 1;
+                
+                // Wait for voices to be loaded
+                if (speechSynthesis.onvoiceschanged !== undefined) {
+                    speechSynthesis.onvoiceschanged = function() {
+                        const updatedVoices = window.speechSynthesis.getVoices();
+                        const updatedIndianVoice = updatedVoices.find(voice => 
+                            voice.lang.includes('en-IN') || 
+                            voice.name.toLowerCase().includes('indian') ||
+                            voice.name.toLowerCase().includes('hindi')
+                        );
+                        if (updatedIndianVoice) {
+                            utterance.voice = updatedIndianVoice;
+                        }
+                    };
+                }
+                
                 window.speechSynthesis.speak(utterance);
             }
         }
         
         // Add item to cart
         function addToCartVoice(item) {
-            // Find the menu item element
-            const menuItems = document.querySelectorAll('.item');
-            let itemElement = null;
+            // Create a form programmatically
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '/add_to_cart';
             
-            for (const element of menuItems) {
-                if (element.dataset.name === item.name) {
-                    itemElement = element;
-                    break;
-                }
+            // Add hidden fields with the same structure as the search results form
+            const fields = {
+                'item_id': item.item_id || '',
+                'item_name': item.name,
+                'category': 'canteen',
+                'quantity': '1'
+            };
+            
+            // Create and append hidden inputs
+            for (const [name, value] of Object.entries(fields)) {
+                const input = document.createElement('input');
+                input.type = name === 'quantity' ? 'number' : 'hidden';
+                input.name = name;
+                input.value = value;
+                form.appendChild(input);
             }
             
-            if (itemElement) {
-                // Get the form and submit it
-                const form = itemElement.querySelector('form');
-                form.submit();
-                
-                // Provide voice feedback
-                speak("Order added to cart");
-                
-                // Close the voice panel
-                closeVoicePanel();
-            }
+            // Append form to body, submit it, and remove it
+            document.body.appendChild(form);
+            form.submit();
+            
+            // Provide voice feedback
+            speak("Adding item to cart");
+            
+            // Close the voice panel
+            closeVoicePanel();
         }
         
         // Open voice panel

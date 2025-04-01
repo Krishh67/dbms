@@ -125,7 +125,7 @@ def get_menu():
         # Execute query to get all menu items
         cursor.execute("SELECT * FROM canteen")
         menu_items = cursor.fetchall()
-        print(menu_items,"checkuibnggggggggggggggggggggggggggggggggggg")
+        #print(menu_items,"checkuibnggggggggggggggggggggggggggggggggggg")
         # Check if menu_items is empty
         # Close connection
         cursor.close()
@@ -143,8 +143,23 @@ def meals():
     if 'username' not in session:
         return redirect(url_for('login'))
 
-    name = findname(session['username'])
-    return render_template('category/meals.html', name=name)
+    try:
+        conn = mysql.connector.connect(**db_config)
+        cursor = conn.cursor(dictionary=True)
+        
+        # Fetch meals from the database
+        cursor.execute("SELECT * FROM meals")
+        meals_items = cursor.fetchall()
+        
+        cursor.close()
+        conn.close()
+        
+        name = findname(session['username'])
+        return render_template('category/meals.html', name=name, meals=meals_items)
+    except Exception as e:
+        print(f"Error fetching meals: {e}")
+        flash('Could not load meals menu.', 'error')
+        return render_template('category/meals.html', name=findname(session['username']), meals=[])
 
 @app.route('/category/drinks')
 def drinks():
@@ -376,9 +391,7 @@ def order_status(order_id):
         
         # Get order details
         cursor.execute("""
-            SELECT o.*, DATE_FORMAT(o.order_date, '%Y-%m-%d %H:%i:%s') as formatted_date 
-            FROM orders o 
-            WHERE o.order_id = %s AND o.user_id = %s
+            SELECT * FROM orders WHERE order_id = %s AND user_id = %s
         """, (order_id, session['username']))
         order = cursor.fetchone()
         
@@ -386,9 +399,6 @@ def order_status(order_id):
             flash('Order not found')
             return redirect(url_for('index'))
             
-        # Convert the formatted_date string back to a datetime object
-        order['order_date'] = datetime.strptime(order['formatted_date'], '%Y-%m-%d %H:%i:%s')
-        
         # Get order items
         cursor.execute("""
             SELECT * FROM order_items
@@ -398,6 +408,10 @@ def order_status(order_id):
         
         cursor.close()
         conn.close()
+        
+        # Ensure status is set
+        if not order['status']:
+            order['status'] = 'pending'
         
         return render_template('order_status.html', order=order, order_items=order_items)
         
@@ -441,7 +455,7 @@ def complete_payment():
         # Get payment details from session
         payment_details = session['payment_details']
         
-        # Create order record
+        # Create order record with simplified fields
         cursor.execute("""
             INSERT INTO orders (user_id, table_number, total_amount, status)
             VALUES (%s, %s, %s, 'pending')
@@ -482,11 +496,11 @@ def complete_payment():
         cursor.close()
         conn.close()
         
-        # Redirect to order status page
-        return redirect(url_for('order_status', order_id=order_id))
+        # Redirect to order confirmation page
+        return redirect(url_for('order_confirmation', order_id=order_id))
         
     except mysql.connector.Error as err:
-        print(f"Database error: {err}")
+        print(f"Database error in complete_payment: {err}")
         if conn:
             conn.rollback()
             cursor.close()
@@ -561,24 +575,44 @@ def chef_dashboard():
     if 'chef_id' not in session:
         return redirect(url_for('chef_login'))
         
-    conn = mysql.connector.connect(**db_config)
-    cursor = conn.cursor(dictionary=True)
-    
-    # Get pending orders
-    cursor.execute("""
-        SELECT o.*, GROUP_CONCAT(oi.quantity, ' x ', oi.item_name) as items
-        FROM orders o
-        JOIN order_items oi ON o.order_id = oi.order_id
-        WHERE o.status IN ('pending', 'cooking')
-        GROUP BY o.order_id
-        ORDER BY o.order_date ASC
-    """)
-    pending_orders = cursor.fetchall()
-    
-    cursor.close()
-    conn.close()
-    
-    return render_template('chef_dashboard.html', orders=pending_orders)
+    try:
+        conn = mysql.connector.connect(**db_config)
+        cursor = conn.cursor(dictionary=True)
+        
+        # Get orders that need chef's attention (pending, cooking, or ready)
+        cursor.execute("""
+            SELECT o.*, 
+                   GROUP_CONCAT(
+                       CONCAT(oi.quantity, ' x ', oi.item_name)
+                       SEPARATOR ', '
+                   ) as order_items
+            FROM orders o
+            JOIN order_items oi ON o.order_id = oi.order_id
+            WHERE o.status IN ('pending', 'cooking', 'ready')
+            GROUP BY o.order_id
+            ORDER BY 
+                CASE o.status
+                    WHEN 'pending' THEN 1
+                    WHEN 'cooking' THEN 2
+                    WHEN 'ready' THEN 3
+                END,
+                o.order_date DESC
+        """)
+        orders = cursor.fetchall()
+        
+        cursor.close()
+        conn.close()
+        
+        return render_template('chef_dashboard.html', orders=orders)
+        
+    except mysql.connector.Error as err:
+        print(f"Database error in chef_dashboard: {err}")
+        flash('Error loading orders', 'error')
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+        return render_template('chef_dashboard.html', orders=[])
 
 @app.route('/chef/update_order', methods=['POST'])
 def update_order():
@@ -588,25 +622,51 @@ def update_order():
     order_id = request.form.get('order_id')
     new_status = request.form.get('status')
     
-    conn = mysql.connector.connect(**db_config)
-    cursor = conn.cursor()
+    # Validate status transition
+    valid_transitions = {
+        'pending': ['cooking'],
+        'cooking': ['ready'],
+        'ready': ['completed']
+    }
     
     try:
-        # Update order status
-        cursor.execute("""
-            UPDATE orders 
-            SET status = %s
-            WHERE order_id = %s
-        """, (new_status, order_id))
-            
-        conn.commit()
-        flash('Order status updated successfully', 'success')
-    except Exception as e:
-        print(f"Error updating order: {e}")
-        flash('Error updating order status', 'error')
+        conn = mysql.connector.connect(**db_config)
+        cursor = conn.cursor(dictionary=True)
         
-    cursor.close()
-    conn.close()
+        # Get current status
+        cursor.execute("SELECT status FROM orders WHERE order_id = %s", (order_id,))
+        current = cursor.fetchone()
+        
+        if not current:
+            flash('Order not found', 'error')
+            return redirect(url_for('chef_dashboard'))
+            
+        current_status = current['status']
+        
+        # Check if transition is valid
+        if current_status in valid_transitions and new_status in valid_transitions[current_status]:
+            # Update order status
+            cursor.execute("""
+                UPDATE orders 
+                SET status = %s
+                WHERE order_id = %s
+            """, (new_status, order_id))
+                
+            conn.commit()
+            flash(f'Order #{order_id} status updated to {new_status}', 'success')
+        else:
+            flash('Invalid status transition', 'error')
+            
+    except mysql.connector.Error as err:
+        print(f"Error updating order: {err}")
+        flash('Error updating order status', 'error')
+        if conn:
+            conn.rollback()
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
     
     return redirect(url_for('chef_dashboard'))
 

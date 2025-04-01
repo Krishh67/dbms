@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html>
   <head>
     <title>
@@ -6,6 +7,19 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&amp;display=swap" rel="stylesheet"/>
+    <style>
+      .logo-container {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        z-index: 10;
+      }
+      .logo-container img {
+        height: 50px;
+        width: auto;
+        object-fit: contain;
+      }
+    </style>
   </head>
   <body class="font-roboto">
     <div class="relative">
@@ -17,8 +31,13 @@
 
       <!-- Main Content -->
       <div class="absolute inset-0 flex flex-col items-center justify-center text-white">
+        <!-- Logo in corner -->
+        <div class="logo-container">
+          <img src="/static/images/logo.png" alt="Food Ordering Logo">
+        </div>
+
         <!-- "Get the App" at the top left -->
-        <div class="absolute top-0 left-0 w-full px-8 py-4 flex items-center gap-4">
+        <div class="absolute top-0 left-0 w-full px-8 py-4 flex items-center gap-4 ml-16">
           <!-- University Logo -->
           <img src="WhatsApp Image 2025-03-27 at 18.41.41_170a6653.jpg" 
                alt="NMIMS Logo"
@@ -27,9 +46,7 @@
           <!-- Existing Link -->
           <a class="hover:underline"  
              class="text-white hover:underline">
-            <button class="text-sm">
-              NMIMS NAVI MUMBAI
-            </button>
+            
           </a>
         </div>
         <!-- Navbar links (Investor Relations, Add Restaurant, etc.) -->
@@ -41,9 +58,9 @@
         </div>
 
         <!-- Main heading -->
-        <h1 class="text-3xl md:text-5xl font-bold mb-4">
+        <h2 class="text-3xl md:text-5xl font-bold mb-4">
           Order your food &amp; drinks Now!
-        </h1>
+        </h2>
 
         <!-- Dropdown menu (assuming more options here) -->
         <div class="flex items-center space-x-2">
@@ -129,11 +146,4 @@
 </footer>
 
 </body>
-</html>
-
-
-
-
-
- </body>
 </html>
